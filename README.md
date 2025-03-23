@@ -5,6 +5,7 @@ Health misinformation, especially during crises like COVID-19, significantly imp
 This repository is made for the Social Media Mining project.
 
 Group Members:
-Nazeefa Muzammil
-Md Mehedi Hasan Jibon
-Alejandro Delgado Rios
+Nazeefa Muzammil/
+Md Mehedi Hasan Jibon/
+Alejandro Delgado Rios/
+Fahim Rahman
