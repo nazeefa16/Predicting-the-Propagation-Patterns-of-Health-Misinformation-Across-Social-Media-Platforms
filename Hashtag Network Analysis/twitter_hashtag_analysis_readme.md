@@ -27,6 +27,9 @@ The analysis used a merged dataset containing tweets related to COVID-19 with tw
     -   Calculated a "Misinformation Ratio" for each hashtag (proportion of occurrences in tweets labeled as misinformation)
     -   Visualized the network with colors representing this ratio (red = high misinformation, blue = reliable)
 
+
+![Tweet Hashtag Network](hashtag_network.png)
+
 ## Key Findings
 
 ### Misinformation Clusters
