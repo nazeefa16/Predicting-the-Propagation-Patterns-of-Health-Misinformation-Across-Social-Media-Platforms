@@ -1,0 +1,99 @@
+# Configuration file for health misinformation detection
+
+# Data settings
+data:
+  path: "global/data/merged_dataset.csv"  # Path to your dataset
+  text_column: "content"           # Column containing the text content
+  label_column: "label"            # Column containing the label
+  preprocessing:
+    clean_text: true               # Whether to clean text
+    lowercase: true                # Convert to lowercase
+    remove_urls: true              # Remove URLs
+    remove_special_chars: true     # Remove special characters
+  
+# Model settings
+model:
+  type: "transformer"              # traditional, transformer, llm
+  name: "bert-base-uncased"        # model name or path
+  use_rag: false                   # whether to use retrieval-augmented generation
+  num_labels: 2                    # number of output classes
+  max_length: 512                  # max sequence length
+
+  # Traditional model parameters (used if type is "traditional")
+  traditional:
+    vectorizer_type: "tfidf"       # tfidf or count
+    max_features: 5000             # maximum features for vectorization
+    ngram_range: [1, 2]            # n-gram range
+    min_df: 5                      # minimum document frequency
+    class_weight: "balanced"       # class weighting
+
+  # Transformer model parameters (used if type is "transformer")
+  transformer:
+    model_name: "bert-base-uncased"  # bert-base-uncased, roberta-base, etc.
+    max_length: 512                  # maximum sequence length
+    use_trainer: true                # whether to use HuggingFace Trainer
+
+  # LLM parameters (used if type is "llm")
+  llm:
+    model_name: "Qwen/Qwen2.5-7B-Instruct-1M"  # LLM model name
+    quantization: "int4"                       # int4, int8, or null
+    torch_dtype: "bfloat16"                    # bfloat16 or float16
+    use_flash_attention: true                  # use flash attention if available
+    system_prompt: "You are an expert in Health information fact-checking."
+    max_new_tokens: 50                         # max tokens to generate
+    batch_size: 8                              # batch size for inference
+    do_sample: false                           # use sampling for generation
+    temperature: 0.7                           # temperature for generation
+    max_samples: 1000                          # limit dataset size for LLM inference
+  
+  # RAG parameters (used if use_rag is true)
+  rag:
+    embedding_model: "sentence-transformers/all-MiniLM-L6-v2"  # embedding model
+    top_k: 2                                                    # number of knowledge items to retrieve
+    batch_size: 64                                              # batch size for retrieval
+    
+# Training settings
+training:
+  epochs: 1                     # number of training epochs
+  batch_size: 32                # batch size for training
+  learning_rate: 5e-5           # learning rate
+  weight_decay: 0.01            # weight decay
+  warmup_ratio: 0.1             # portion of steps for warmup
+  test_size: 0.2                # test split size
+  val_size: 0.1                 # validation split size
+  stratify: true                # stratify split by labels
+  use_trainer: true             # use HuggingFace Trainer (for transformers)
+  early_stopping: true          # use early stopping
+  early_stopping_patience: 3    # patience for early stopping
+  logging_steps: 50             # logging frequency
+  eval_steps: 100               # evaluation frequency
+  save_steps: 100               # checkpoint saving frequency
+  max_samples: null             # limit dataset size (for testing)
+  seed: 42                      # random seed
+  extra_params:
+    fp16: true                                # use FP16 precision
+    gradient_accumulation_steps: 1            # gradient accumulation
+    report_to: "none"                         # logging destination
+    metric_for_best_model: "f1"               # metric to select best model
+    greater_is_better: true                   # whether higher is better for the metric
+    load_best_model_at_end: true              # load best model at end of training
+    
+# Evaluation settings
+evaluation:
+  metrics:
+    - accuracy
+    - precision
+    - recall
+    - f1
+    - roc_auc
+    - pr_auc
+  threshold: 0.5                    # classification threshold
+  detailed_evaluation: true         # perform detailed evaluation
+  error_analysis: true              # perform error analysis
+  category_analysis: true           # analyze performance by category
+  generate_visualizations: true     # generate visualizations
+  extra_params:
+    max_error_examples: 100         # maximum examples in error analysis
+    
+# Output settings
+output_dir: "./output"              # output directory
