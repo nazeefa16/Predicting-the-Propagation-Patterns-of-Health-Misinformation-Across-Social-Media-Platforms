@@ -52,11 +52,11 @@ fi
 echo "==== Comparing all models ===="
 
 # Make the comparison script executable
-chmod +x "$BASE_DIR/scripts/compare_all_models.py"
+chmod +x "$BASE_DIR/global/evaluation/compare_all_models.py"
 
 # Run the comparison script
 mkdir -p "$OUTPUT_DIR/comparison"
-$PYTHON_PATH "$BASE_DIR/scripts/compare_all_models.py" --input_dir "$OUTPUT_DIR" --output_dir "$OUTPUT_DIR/comparison"
+$PYTHON_PATH "$BASE_DIR/global/evaluation/compare_all_models.py" --input_dir "$OUTPUT_DIR" --output_dir "$OUTPUT_DIR/comparison"
 
 echo "All done! Results are saved in $OUTPUT_DIR/comparison"
 echo "Key results files:"

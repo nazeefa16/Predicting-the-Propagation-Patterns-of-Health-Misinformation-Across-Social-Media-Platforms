@@ -871,3 +871,41 @@ def analyze_performance_by_category(
                     plt.close()
     
     return category_metrics_df
+
+def summarize_metrics(metrics_dict, model_name=None):
+    """
+    Create a clean summary of metrics for display
+    
+    Args:
+        metrics_dict: Dictionary with metrics
+        model_name: Optional model name to include
+        
+    Returns:
+        Dictionary with simplified metrics
+    """
+    summary = {}
+    
+    # Add model name if provided
+    if model_name:
+        summary["model"] = model_name
+    
+    # Core metrics that should always be included
+    key_metrics = ["accuracy", "precision", "recall", "f1", "roc_auc", "pr_auc"]
+    
+    # Try different possible keys for each metric
+    for metric in key_metrics:
+        # Check for different variations of metric names
+        value = metrics_dict.get(metric)
+        if value is None:
+            value = metrics_dict.get(f"eval_{metric}")
+        if value is None:
+            for k in metrics_dict.keys():
+                if k.lower().endswith(f"_{metric}"):
+                    value = metrics_dict[k]
+                    break
+        
+        # Add to summary if found
+        if value is not None:
+            summary[metric] = value
+    
+    return summary

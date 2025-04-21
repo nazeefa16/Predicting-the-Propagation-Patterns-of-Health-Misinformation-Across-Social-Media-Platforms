@@ -1,0 +1,206 @@
+{
+  "accuracy": 0.8604651162790697,
+  "precision": 0.826865671641791,
+  "recall": 0.8964401294498382,
+  "f1": 0.860248447204969,
+  "mean_confidence_correct": 0.9248270988464355,
+  "mean_confidence_incorrect": 0.2543926537036896,
+  "roc_auc": 0.9479840884573895,
+  "pr_auc": 0.9427970301078359,
+  "brier_score": 0.09651900287733932,
+  "confusion_matrix": [
+    [
+      556,
+      116
+    ],
+    [
+      64,
+      554
+    ]
+  ],
+  "tn": 556,
+  "fp": 116,
+  "fn": 64,
+  "tp": 554,
+  "threshold_analysis": [
+    {
+      "threshold": 0.1,
+      "accuracy": 0.8503875968992248,
+      "precision": 0.7741935483870968,
+      "recall": 0.970873786407767,
+      "f1": 0.8614501076812635
+    },
+    {
+      "threshold": 0.18888888888888888,
+      "accuracy": 0.8550387596899225,
+      "precision": 0.7839262187088274,
+      "recall": 0.9627831715210357,
+      "f1": 0.8641975308641975
+    },
+    {
+      "threshold": 0.2777777777777778,
+      "accuracy": 0.8550387596899225,
+      "precision": 0.7948016415868673,
+      "recall": 0.9401294498381877,
+      "f1": 0.8613787991104522
+    },
+    {
+      "threshold": 0.3666666666666667,
+      "accuracy": 0.8573643410852713,
+      "precision": 0.803072625698324,
+      "recall": 0.93042071197411,
+      "f1": 0.8620689655172413
+    },
+    {
+      "threshold": 0.4555555555555556,
+      "accuracy": 0.8573643410852713,
+      "precision": 0.8126801152737753,
+      "recall": 0.912621359223301,
+      "f1": 0.8597560975609756
+    },
+    {
+      "threshold": 0.5444444444444445,
+      "accuracy": 0.8558139534883721,
+      "precision": 0.8302752293577982,
+      "recall": 0.8786407766990292,
+      "f1": 0.8537735849056604
+    },
+    {
+      "threshold": 0.6333333333333333,
+      "accuracy": 0.8534883720930233,
+      "precision": 0.8533772652388797,
+      "recall": 0.8381877022653722,
+      "f1": 0.8457142857142858
+    },
+    {
+      "threshold": 0.7222222222222222,
+      "accuracy": 0.8550387596899225,
+      "precision": 0.8868940754039497,
+      "recall": 0.7993527508090615,
+      "f1": 0.8408510638297872
+    },
+    {
+      "threshold": 0.8111111111111111,
+      "accuracy": 0.8441860465116279,
+      "precision": 0.9263803680981595,
+      "recall": 0.7330097087378641,
+      "f1": 0.8184281842818428
+    },
+    {
+      "threshold": 0.9,
+      "accuracy": 0.7976744186046512,
+      "precision": 0.9588688946015425,
+      "recall": 0.6035598705501618,
+      "f1": 0.7408142999006951
+    }
+  ],
+  "classification_report": {
+    "0": {
+      "precision": 0.896774193548387,
+      "recall": 0.8273809523809523,
+      "f1-score": 0.8606811145510835,
+      "support": 672.0
+    },
+    "1": {
+      "precision": 0.826865671641791,
+      "recall": 0.8964401294498382,
+      "f1-score": 0.860248447204969,
+      "support": 618.0
+    },
+    "accuracy": 0.8604651162790697,
+    "macro avg": {
+      "precision": 0.861819932595089,
+      "recall": 0.8619105409153953,
+      "f1-score": 0.8604647808780262,
+      "support": 1290.0
+    },
+    "weighted avg": {
+      "precision": 0.8632831342163898,
+      "recall": 0.8604651162790697,
+      "f1-score": 0.8604738367062007,
+      "support": 1290.0
+    }
+  },
+  "error_examples": [
+    {
+      "text": "there is no one in new zealand receiving hospital-level care for covid-19.",
+      "true_label": "Factual",
+      "predicted_label": "Misinformation",
+      "confidence": 0.9224663376808167,
+      "analysis_category": "Incorrect - High Confidence",
+      "text_length": 12
+    },
+    {
+      "text": "rt : urgently needed at airports - \u2757 thaali bajao \u2757 \ud83d\udc4f bajao \u2757 coronil \u2757 bhabhi ji papad \u2757 petal showers \u2757 lights off \u2757 corona mat\u2026",
+      "true_label": "Misinformation",
+      "predicted_label": "Factual",
+      "confidence": 0.9533177018165588,
+      "analysis_category": "Incorrect - High Confidence",
+      "text_length": 28
+    },
+    {
+      "text": "expired but sterilized n95 masks get the job done.",
+      "true_label": "Factual",
+      "predicted_label": "Misinformation",
+      "confidence": 0.9363236427307129,
+      "analysis_category": "Incorrect - High Confidence",
+      "text_length": 9
+    },
+    {
+      "text": "\ud83d\udde3\ufe0f want to get the team together? we have covid-safe meeting rooms and plenty of #coworking space, free wifi and coffee. conveniently located off the m40 in #bicester, close to train, road and bus links",
+      "true_label": "Misinformation",
+      "predicted_label": "Factual",
+      "confidence": 0.9280136227607727,
+      "analysis_category": "Incorrect - High Confidence",
+      "text_length": 35
+    },
+    {
+      "text": "dr. anjali bharati, an emergency medicine physician at northwell health in new york city, said on \u201cfox & friends\u201d on thursday that the volume of emergency cases related to the novel coronavirus has \u201cdefinitely gone down\u201d this week, however, the severity of the symptoms has \u201creally kicked up a notch.\u201d",
+      "true_label": "Misinformation",
+      "predicted_label": "Factual",
+      "confidence": 0.9242525100708008,
+      "analysis_category": "Incorrect - High Confidence",
+      "text_length": 50
+    },
+    {
+      "text": "jennifer kates, the director of global health and hiv policy at the kaiser family foundation, said in a phone interview, \u201cthere could be other costs incurred.\u201d visits to the doctor\u2019s office and the emergency room can cost patients money, she said, noting that some high-deductible insurance plans could effectively charge patients who go to the er $1,000 or more",
+      "true_label": "Misinformation",
+      "predicted_label": "Factual",
+      "confidence": 0.9151941537857056,
+      "analysis_category": "Incorrect - High Confidence",
+      "text_length": 59
+    },
+    {
+      "text": "action shot pipetting \ud83e\uddeb\ud83e\uddec\ud83d\ude02",
+      "true_label": "Factual",
+      "predicted_label": "Misinformation",
+      "confidence": 0.9450106024742126,
+      "analysis_category": "Incorrect - High Confidence",
+      "text_length": 4
+    },
+    {
+      "text": "help scientists discover whether rinsing your nose and gargling with salt water could help reduce covid-19 symptoms &amp; reduce transmission. if you know any adults with covid-19 symptoms in the uk please tell them about this study:",
+      "true_label": "Misinformation",
+      "predicted_label": "Factual",
+      "confidence": 0.9835882186889648,
+      "analysis_category": "Incorrect - High Confidence",
+      "text_length": 37
+    },
+    {
+      "text": "people are drinking sanitizer to get an alcohol high a dangerous trend.",
+      "true_label": "Factual",
+      "predicted_label": "Misinformation",
+      "confidence": 0.9196541905403137,
+      "analysis_category": "Incorrect - High Confidence",
+      "text_length": 12
+    },
+    {
+      "text": "dr. lieber, a nanoscientist and biochemist of harvard university was indeed arrested by the us doj for allegedly making a false statement about his involvement with the chinese government",
+      "true_label": "Factual",
+      "predicted_label": "Misinformation",
+      "confidence": 0.9468004107475281,
+      "analysis_category": "Incorrect - High Confidence",
+      "text_length": 29
+    }
+  ]
+}

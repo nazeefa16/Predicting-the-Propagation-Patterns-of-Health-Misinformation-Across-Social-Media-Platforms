@@ -108,14 +108,7 @@ class TransformerModel(BaseModel):
             logger.error(f"Error initializing model: {e}")
             raise
     
-    def prepare_data(
-        self, 
-        data: Union[pd.DataFrame, Dict], 
-        text_column: str = "content",
-        label_column: str = "label", 
-        test_size: float = 0.2,
-        **kwargs
-    ) -> Dict[str, Any]:
+    def prepare_data(self, data, text_column="content", label_column="label", test_size=0.2, **kwargs):
         """
         Prepare data for training or prediction
         
@@ -136,7 +129,46 @@ class TransformerModel(BaseModel):
             train_df = data["train"]
             val_df = data["val"]
             test_df = data.get("test")
+        elif isinstance(data, dict) and len(data) == 1 and isinstance(next(iter(data.values())), pd.DataFrame):
+            # Handle single split passed as a dictionary
+            split_name = next(iter(data.keys()))
+            split_df = data[split_name]
+            
+            # Verify required columns
+            if text_column not in split_df.columns:
+                raise KeyError(f"Text column '{text_column}' not found in {split_name} DataFrame")
+            if label_column not in split_df.columns:
+                raise KeyError(f"Label column '{label_column}' not found in {split_name} DataFrame")
+                
+            # For simplicity, use this as the only split
+            if split_name == "train":
+                train_df = split_df
+                val_df = None
+                test_df = None
+            elif split_name == "val":
+                train_df = None
+                val_df = split_df
+                test_df = None
+            elif split_name == "test":
+                train_df = None
+                val_df = None
+                test_df = split_df
+            else:
+                # Unknown split, use as training
+                train_df = split_df
+                val_df = None
+                test_df = None
         else:
+            # Assume it's a DataFrame 
+            if not isinstance(data, pd.DataFrame):
+                raise TypeError(f"Expected DataFrame or dictionary, got {type(data)}")
+                
+            # Verify required columns
+            if text_column not in data.columns:
+                raise KeyError(f"Text column '{text_column}' not found in DataFrame")
+            if label_column not in data.columns:
+                raise KeyError(f"Label column '{label_column}' not found in DataFrame")
+                
             # Convert labels if they are strings
             if isinstance(data[label_column].iloc[0], str):
                 data = data.copy()
@@ -157,18 +189,25 @@ class TransformerModel(BaseModel):
                 stratify=temp_df[label_column] if kwargs.get("stratify", True) else None
             )
         
-        logger.info(f"Data split - Train: {len(train_df)}, Val: {len(val_df)}, "
-                   f"Test: {len(test_df) if test_df is not None else 'N/A'}")
+        # Now prepare any available splits
+        result = {}
         
-        # Prepare datasets
-        return self._create_datasets(
-            train_df=train_df,
-            val_df=val_df,
-            test_df=test_df,
-            text_column=text_column,
-            label_column=label_column,
-            **kwargs
-        )
+        if train_df is not None:
+            logger.info(f"Preparing training data with {len(train_df)} samples")
+            train_data = self._create_dataset_for_split(train_df, text_column, label_column, **kwargs)
+            result.update(train_data)
+            
+        if val_df is not None:
+            logger.info(f"Preparing validation data with {len(val_df)} samples")
+            val_data = self._create_dataset_for_split(val_df, text_column, label_column, split="val", **kwargs)
+            result.update(val_data)
+            
+        if test_df is not None:
+            logger.info(f"Preparing test data with {len(test_df)} samples")
+            test_data = self._create_dataset_for_split(test_df, text_column, label_column, split="test", **kwargs)
+            result.update(test_data)
+        
+        return result
     
     def _create_datasets(
         self,
@@ -273,7 +312,39 @@ class TransformerModel(BaseModel):
             "val_df": val_df,
             "test_df": test_df
         }
-    
+    def _create_dataset_for_split(self, df, text_column, label_column, split="train", **kwargs):
+        """Helper to create a dataset for a single data split"""
+        # Extract texts and labels
+        texts = df[text_column].tolist()
+        labels = df[label_column].tolist()
+        
+        # Tokenize texts
+        encodings = self.tokenizer(
+            texts, 
+            truncation=True, 
+            padding=True,
+            max_length=self.max_length
+        )
+        
+        # Create dataset
+        dataset = TextDataset(encodings, labels)
+        
+        # Create dataloader
+        batch_size = kwargs.get("batch_size", 32)
+        loader = DataLoader(
+            dataset, 
+            batch_size=batch_size, 
+            shuffle=(split == "train")
+        )
+        
+        # Return data dict
+        return {
+            f"{split}_dataset": dataset,
+            f"{split}_loader": loader,
+            f"{split}_df": df,
+            f"{split}_texts": texts,
+            f"{split}_labels": labels
+        }
     def train(
         self, 
         train_data: Dict[str, Any],

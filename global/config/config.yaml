@@ -2,7 +2,7 @@
 
 # Data settings
 data:
-  path: "global/data/merged_dataset.csv"  # Path to your dataset
+  path: "/home/aledel/repos/Predicting-the-Propagation-Patterns-of-Health-Misinformation-Across-Social-Media-Platforms/global/data/merged_dataset.csv"  # Path to your dataset
   text_column: "content"           # Column containing the text content
   label_column: "label"            # Column containing the label
   preprocessing:
@@ -41,9 +41,9 @@ model:
     use_flash_attention: true                  # use flash attention if available
     system_prompt: "You are an expert in Health information fact-checking."
     max_new_tokens: 50                         # max tokens to generate
-    batch_size: 8                              # batch size for inference
+    batch_size: 64                             # batch size for inference
     do_sample: false                           # use sampling for generation
-    temperature: 0.7                           # temperature for generation
+    temperature: 0                             # temperature for generation
     max_samples: 1000                          # limit dataset size for LLM inference
   
   # RAG parameters (used if use_rag is true)
@@ -54,8 +54,8 @@ model:
     
 # Training settings
 training:
-  epochs: 1                     # number of training epochs
-  batch_size: 32                # batch size for training
+  epochs: 3                     # number of training epochs
+  batch_size: 64                # batch size for training
   learning_rate: 5e-5           # learning rate
   weight_decay: 0.01            # weight decay
   warmup_ratio: 0.1             # portion of steps for warmup

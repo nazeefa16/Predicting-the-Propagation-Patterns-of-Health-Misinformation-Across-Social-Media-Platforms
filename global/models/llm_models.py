@@ -28,7 +28,7 @@ class LLMModel(BaseModel):
         quantization: Optional[str] = "int4",
         system_prompt: Optional[str] = None,
         max_new_tokens: int = 50,
-        batch_size: int = 8,
+        batch_size: int = 64,
         **kwargs
     ):
         """
@@ -112,7 +112,7 @@ class LLMModel(BaseModel):
                 self.generation_config = GenerationConfig(
                     max_new_tokens=self.max_new_tokens,
                     do_sample=kwargs.get("do_sample", False),
-                    temperature=kwargs.get("temperature", 0.7),
+                    temperature=kwargs.get("temperature", 0),
                     top_p=kwargs.get("top_p", 0.9),
                     top_k=kwargs.get("top_k", 50),
                     repetition_penalty=kwargs.get("repetition_penalty", 1.0)

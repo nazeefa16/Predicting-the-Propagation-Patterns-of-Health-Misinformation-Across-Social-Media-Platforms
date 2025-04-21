@@ -1,0 +1,1 @@
+{"model_name": "logistic_regression", "num_labels": 2, "vectorizer_type": "tfidf", "max_features": 5000}

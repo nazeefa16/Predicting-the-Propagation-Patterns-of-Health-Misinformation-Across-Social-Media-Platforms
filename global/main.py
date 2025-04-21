@@ -20,14 +20,14 @@ from models.rag_models import RAGTransformerModel, RAGLLMModel, BatchRetriever
 from data.knowledge_base import KNOWLEDGE_BASE
 from evaluation.metrics import evaluate_model, compare_models
 from utils.helpers import set_seed, setup_logging
-
+from models.traditional_models import *
 logger = logging.getLogger(__name__)
 
 def parse_args():
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(description="Health Misinformation Detection System")
     
-    parser.add_argument("--config", type=str, default="global/config/config.yaml",
+    parser.add_argument("--config", type=str, default="/home/aledel/repos/Predicting-the-Propagation-Patterns-of-Health-Misinformation-Across-Social-Media-Platforms/global/config/config.yaml",
                         help="Path to configuration file")
     parser.add_argument("--mode", type=str, choices=["train", "evaluate", "both"], default="both",
                         help="Operation mode: train, evaluate, or both")
@@ -117,8 +117,10 @@ def create_model(model_config: Dict[str, Any], use_rag: bool = False) -> Any:
         if model_type == "traditional":
             model_name = model_config.get("name", "logistic_regression")
             
-            if model_name.lower() == "logistic_regression":
+            if "logistic" in model_name.lower():
                 model = LogisticRegressionModel(**common_params)
+            elif "naive" in model_name.lower():
+                base_model = NaiveBayesModel(**common_params)
             else:
                 raise ValueError(f"Unsupported traditional model: {model_name}")
                 
@@ -189,22 +191,14 @@ def create_model(model_config: Dict[str, Any], use_rag: bool = False) -> Any:
         logger.error(f"Error creating model: {e}")
         raise
 
+
+
 def train_model(
     model: Any, 
     data: pd.DataFrame, 
     train_config: Dict[str, Any]
 ) -> Dict[str, Any]:
-    """
-    Train model with given data
-    
-    Args:
-        model: Model to train
-        data: Training data
-        train_config: Training configuration
-        
-    Returns:
-        Dictionary with training results
-    """
+    """Train model with given data"""
     try:
         logger.info(f"Training model {model}")
         
@@ -212,22 +206,39 @@ def train_model(
         prepared_data = model.prepare_data(
             data,
             text_column=train_config.get("text_column", "content"),
-            label_column=train_config.get("label_column", "label_encoded"),
+            label_column=train_config.get("label_column", "label"),  # Use "label" not "label_encoded"
             test_size=train_config.get("test_size", 0.2)
         )
         
         # Make sure learning_rate is a float
         learning_rate = float(train_config.get("learning_rate", 5e-5))
         
-        # Train model
-        train_results = model.train(
-            train_data={"train_dataset": prepared_data["train_dataset"], "train_loader": prepared_data["train_loader"]},
-            val_data={"val_dataset": prepared_data["val_dataset"], "val_loader": prepared_data["val_loader"]},
-            num_epochs=train_config.get("epochs", 1),
-            batch_size=train_config.get("batch_size", 256),
-            learning_rate=learning_rate,  # Use explicitly converted float value
-            **train_config.get("extra_params", {})
-        )
+        # Check model type to handle different training approaches
+        if isinstance(model, TraditionalModel):
+            # Traditional model training
+            train_results = model.train(
+                train_data=prepared_data,
+                val_data=prepared_data,  # Pass the same data for validation
+                num_epochs=train_config.get("epochs", 1),
+                batch_size=train_config.get("batch_size", 256),
+                learning_rate=learning_rate,
+                **train_config.get("extra_params", {})
+            )
+        elif any(cls_name in model.__class__.__name__ for cls_name in ["QwenModel", "LlamaModel", "MixtralModel", "RAGLLMModel"]):
+            # LLM model - just perform inference, no training needed
+            logger.info(f"LLM model detected: {model.__class__.__name__} - skipping training, will perform inference only")
+            # Just return empty results - LLMs don't need training
+            train_results = {}
+        else:
+            # Transformer model training
+            train_results = model.train(
+                train_data={"train_dataset": prepared_data["train_dataset"], "train_loader": prepared_data["train_loader"]},
+                val_data={"val_dataset": prepared_data["val_dataset"], "val_loader": prepared_data["val_loader"]},
+                num_epochs=train_config.get("epochs", 1),
+                batch_size=train_config.get("batch_size", 256),
+                learning_rate=learning_rate,
+                **train_config.get("extra_params", {})
+            )
         
         return {
             "model": model,

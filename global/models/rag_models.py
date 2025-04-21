@@ -348,14 +348,7 @@ class RAGModelWrapper(BaseModel):
         
         return processed_data
     
-    def _process_split(
-        self, 
-        df: pd.DataFrame, 
-        text_column: str,
-        label_column: str,
-        split_name: str,
-        **kwargs
-    ) -> Dict[str, Any]:
+    def _process_split(self, df, text_column, label_column, split_name, **kwargs):
         """
         Process a data split with RAG
         
@@ -395,8 +388,10 @@ class RAGModelWrapper(BaseModel):
         processed_df["knowledge_scores"] = knowledge_scores
         
         # Re-prepare with base model using combined text
+        # FIX: Pass the processed_df directly instead of wrapping it in a dictionary
+        # This allows the base model's prepare_data method to access the label column
         base_data = self.base_model.prepare_data(
-            {f"{split_name}": processed_df},
+            processed_df,  # Changed from {f"{split_name}": processed_df}
             text_column="combined_text",
             label_column=label_column,
             **kwargs

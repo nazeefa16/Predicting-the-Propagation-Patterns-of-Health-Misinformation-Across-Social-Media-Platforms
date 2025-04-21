@@ -1,0 +1,26 @@
+{
+  "baseline": {
+    "eval_loss": 0.3016021251678467,
+    "eval_accuracy": 0.8604651162790697,
+    "eval_f1": 0.860248447204969,
+    "eval_precision": 0.826865671641791,
+    "eval_recall": 0.8964401294498382,
+    "eval_runtime": 0.9002,
+    "eval_samples_per_second": 1433.07,
+    "eval_steps_per_second": 6.665,
+    "epoch": 3.0
+  },
+  "rag": {
+    "eval_loss": 0.29519978165626526,
+    "eval_accuracy": 0.8573643410852713,
+    "eval_f1": 0.8525641025641025,
+    "eval_precision": 0.8444444444444444,
+    "eval_recall": 0.86084142394822,
+    "eval_runtime": 0.9139,
+    "eval_samples_per_second": 1411.48,
+    "eval_steps_per_second": 6.565,
+    "epoch": 3.0
+  },
+  "dataset_size": 12899,
+  "original_dataset_size": 12900
+}
