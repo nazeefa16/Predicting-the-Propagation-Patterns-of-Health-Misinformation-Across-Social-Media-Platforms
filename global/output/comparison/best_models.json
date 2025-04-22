@@ -1,0 +1,26 @@
+{
+  "accuracy": [
+    "traditional_svm",
+    0.8461836497481596
+  ],
+  "precision": [
+    "traditional_logistic_regression",
+    0.8027859237536656
+  ],
+  "recall": [
+    "traditional_svm",
+    0.9013742926434923
+  ],
+  "f1": [
+    "traditional_svm",
+    0.8488770460601447
+  ],
+  "roc_auc": [
+    "traditional_logistic_regression",
+    0
+  ],
+  "pr_auc": [
+    "traditional_logistic_regression",
+    0
+  ]
+}

@@ -4,6 +4,7 @@ import torch
 import numpy as np
 from typing import Dict, Any, Tuple, List
 from sentence_transformers import SentenceTransformer, util
+from tqdm import tqdm
 
 from .base import BaseModel
 from .transformer import TransformerModel
@@ -158,7 +159,7 @@ class RAGModel(BaseModel):
             knowledge_base: Knowledge base dictionary
         """
         super().__init__(f"rag_{model_name}")
-        self.base_model = TransformerModel(model_name)
+        self.base_model = TransformerModel({"model_name": model_name})
         self.top_k = top_k
         
         # Initialize retriever
@@ -191,9 +192,9 @@ class RAGModel(BaseModel):
         
         return combined.strip()
     
-    def prepare_data(self, data_splits: Dict[str, Any]) -> Dict[str, Any]:
+    def prepare_data(self, data_splits):
         """
-        Prepare data with RAG enhancement
+        Prepare data for RAG model
         
         Args:
             data_splits: Dictionary with data splits (train, val, test)
@@ -203,40 +204,30 @@ class RAGModel(BaseModel):
         """
         result = {}
         
-        # Process each split
+        # Make sure data is in the right format for the base model
+        # The TransformerModel expects data_splits to contain DataFrames with "processed_text" column
+        base_data_splits = {}
+        
         for split_name, df in data_splits.items():
-            # Extract texts
-            texts = df["processed_text"].tolist()
-            labels = df["label_encoded"].tolist()
-            
-            # Retrieve knowledge for each text
-            knowledge_results = self.retriever.batch_retrieve(texts, self.top_k)
-            
-            # Combine texts with knowledge
-            combined_texts = []
-            for i, text in enumerate(texts):
-                # Extract knowledge items
-                knowledge_items = [item for item, _, _ in knowledge_results[i]]
-                
-                # Combine text with knowledge
-                combined_text = self.combine_text_with_knowledge(text, knowledge_items)
-                combined_texts.append(combined_text)
-            
-            # Create augmented dataframe
-            df_aug = df.copy()
-            df_aug["processed_text"] = combined_texts
-            
-            # Store in result
-            result[f"{split_name}_df"] = df_aug
-            result[f"{split_name}_texts"] = combined_texts
-            result[f"{split_name}_labels"] = labels
-            result[f"{split_name}_knowledge"] = knowledge_results
+            # Ensure df is a DataFrame with the required columns
+            if isinstance(df, list):
+                # Convert list to DataFrame if needed
+                import pandas as pd
+                base_data_splits[split_name] = pd.DataFrame({
+                    "processed_text": df,
+                    "label_encoded": [0] * len(df)  # Default labels
+                })
+            else:
+                # Just pass it through
+                base_data_splits[split_name] = df
         
-        # Process with base model
-        base_data = self.base_model.prepare_data(result)
+        # Now call the base model's prepare_data with properly formatted data
+        base_data = self.base_model.prepare_data(base_data_splits)
         
-        # Merge results
+        # Merge base model's processed data with your own processing
         result.update(base_data)
+        
+        # Add any additional RAG-specific processing here
         
         return result
     

@@ -34,12 +34,11 @@ AVAILABLE_MODELS = {
         "svm"
     ],
     "transformer": [
-        "bert-base-uncased", 
-        "roberta-base"
+        "distilbert-base-uncased", 
+        "distilroberta-base",
     ],
     "rag": [
-        "roberta-base"
-        "Qwen/Qwen2.5-7B-Instruct-1M",
+        "distilroberta-base"
     ],
     "llm_rag": [
         "Qwen/Qwen2.5-7B-Instruct-1M",
@@ -121,10 +120,11 @@ def load_config(config_path: str) -> Dict[str, Any]:
 
 def create_model(model_type: str, model_name: str) -> Any:
     """Create model based on type and name"""
+    print(f"Create model received model_name : {model_name}")
     if model_type == "traditional":
         return TraditionalModel(model_name=model_name)
     elif model_type == "transformer":
-        return TransformerModel(model_name=model_name)
+        return TransformerModel(config={"model_name": model_name})
     elif model_type == "rag":
         return RAGModel(model_name=model_name, knowledge_base=KNOWLEDGE_BASE)
     elif model_type == "llm_rag":

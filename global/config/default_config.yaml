@@ -20,4 +20,4 @@ training:
   seed: 42                         # Random seed
   
 # Output settings
-output_dir: "global/output"             # Output directory
+output_dir: "output"             # Output directory

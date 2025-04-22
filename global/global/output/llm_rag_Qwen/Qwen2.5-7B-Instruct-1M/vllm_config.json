@@ -1,0 +1,10 @@
+{
+  "model_name": "rag_Qwen/Qwen2.5-7B-Instruct-1M",
+  "num_labels": 2,
+  "tensor_parallel_size": 1,
+  "max_new_tokens": 50,
+  "system_prompt": "You are an expert in Health information fact-checking. You will be provided with both a text to classify and relevant knowledge from trusted sources. Use this knowledge to help determine if the text contains misinformation.",
+  "batch_size": 64,
+  "top_k": 2,
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2"
+}

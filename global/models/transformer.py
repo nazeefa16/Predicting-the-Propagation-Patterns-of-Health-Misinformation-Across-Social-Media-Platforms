@@ -30,11 +30,11 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ModelConfig:
     """Configuration for transformer model"""
-    model_name: str = "bert-base-uncased"
+    model_name: str = "distilroberta-base"
     max_length: int = 512
     num_labels: int = 2
-    batch_size: int = 32
-    eval_batch_size: int = 64
+    batch_size: int = 128
+    eval_batch_size: int = 256
     learning_rate: float = 5e-5
     weight_decay: float = 0.01
     warmup_ratio: float = 0.1
@@ -367,7 +367,7 @@ class TransformerModel(BaseModel):
             warmup_ratio=self.config.warmup_ratio,
             logging_dir=f"{output_dir}/logs",
             logging_steps=50,
-            evaluation_strategy="steps",
+            eval_strategy="steps",
             save_strategy="steps",
             save_steps=100,
             eval_steps=100,
@@ -780,7 +780,7 @@ class TransformerModel(BaseModel):
             warmup_ratio=self.config.warmup_ratio,
             logging_dir=f"{output_dir}/logs",
             logging_steps=50,
-            evaluation_strategy="steps",
+            eval_strategy="steps",
             save_strategy="steps",
             save_steps=100,
             eval_steps=100,
