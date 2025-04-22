@@ -1,5 +1,0 @@
-{
-  "error": "The least populated class in y has only 1 member, which is too few. The minimum number of groups for any class cannot be less than 2.",
-  "status": "failed",
-  "timestamp": "2025-04-16T22:09:55.866946"
-}

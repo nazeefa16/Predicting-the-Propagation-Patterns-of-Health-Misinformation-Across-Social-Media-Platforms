@@ -14,7 +14,7 @@ class BatchRetriever(BaseRetriever):
         self, 
         queries: List[str], 
         top_k: int = 2, 
-        batch_size: int = 64
+        batch_size: int = 128
     ) -> List[List[Tuple[str, float, str]]]:
         """
         Retrieve knowledge for multiple queries in batches
@@ -74,7 +74,7 @@ class BatchRetriever(BaseRetriever):
         self, 
         texts: List[str], 
         top_k: int = 2, 
-        batch_size: int = 64,
+        batch_size: int = 128,
         combine: bool = True
     ) -> Tuple[List[str], List[List[Tuple[str, float, str]]]]:
         """

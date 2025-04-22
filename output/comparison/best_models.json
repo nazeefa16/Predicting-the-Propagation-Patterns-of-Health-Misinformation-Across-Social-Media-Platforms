@@ -1,0 +1,26 @@
+{
+  "accuracy": [
+    "transformer_roberta-base",
+    0.8690430065865944
+  ],
+  "precision": [
+    "transformer_roberta-base",
+    0.8503507404520655
+  ],
+  "recall": [
+    "transformer_bert-base-uncased",
+    0.9215844785772029
+  ],
+  "f1": [
+    "transformer_bert-base-uncased",
+    0.8702290076335878
+  ],
+  "roc_auc": [
+    "transformer_bert-base-uncased",
+    0
+  ],
+  "pr_auc": [
+    "transformer_bert-base-uncased",
+    0
+  ]
+}

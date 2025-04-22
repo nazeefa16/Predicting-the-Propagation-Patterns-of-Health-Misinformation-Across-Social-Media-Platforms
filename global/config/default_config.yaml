@@ -1,0 +1,23 @@
+# Data settings
+data:
+  path: "data/merged_dataset.csv"  # Path to dataset (relative to project root)
+  text_column: "content"           # Column containing text content
+  label_column: "label"            # Column containing label
+  
+# Model settings
+model:
+  type: "transformer"              # Options: traditional, transformer, rag
+  name: "bert-base-uncased"        # Model name or variant
+  max_length: 512                  # Max sequence length for transformers
+  
+# Training settings
+training:
+  epochs: 3                        # Number of training epochs
+  batch_size: 128                   # Batch size
+  learning_rate: 5e-5              # Learning rate
+  test_size: 0.2                   # Test split size
+  val_size: 0.1                    # Validation split size
+  seed: 42                         # Random seed
+  
+# Output settings
+output_dir: "global/output"             # Output directory

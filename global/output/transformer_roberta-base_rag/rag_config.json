@@ -1,8 +1,0 @@
-{
-  "model_name": "rag_roberta-base",
-  "base_model_name": "roberta-base",
-  "base_model_type": "BERTModel",
-  "top_k": 2,
-  "batch_size": 64,
-  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2"
-}

@@ -1,0 +1,5 @@
+{
+  "model_name": "roberta-base",
+  "num_labels": 2,
+  "max_length": 512
+}
