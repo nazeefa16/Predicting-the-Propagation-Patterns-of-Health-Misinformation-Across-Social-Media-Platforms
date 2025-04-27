@@ -11,16 +11,26 @@ Health misinformation, especially during crises like COVID-19, significantly imp
 The data used is a combination of three datasets. COVIDLIES, HealthLies, and CONSTRAINT.
 We have implemented the following models:
 1. Classical Machine Learning Models:
-Logistic Regression: Linear classifier with L2 regularization
-Naive Bayes: Probabilistic classifier based on Bayes' theorem
-Random Forest: Ensemble of decision trees with bootstrap sampling
-Support Vector Machine (SVM): Implementation with RBF kernel
+
+  Logistic Regression: Linear classifier with L2 regularization
+
+  Naive Bayes: Probabilistic classifier based on Bayes' theorem
+
+  Random Forest: Ensemble of decision trees with bootstrap sampling
+
+  Support Vector Machine (SVM): Implementation with RBF kernel
+
 2. Transformer-Based Models:
-BERT Baseline: Pre-trained BERT-base model fine-tuned on our dataset
-RoBERTa: Optimized BERT architecture with improved training methodology
-RoBERTa + RAG: RoBERTa model enhanced with Retrieval Augmented Generation 
-Qwen 2.5 (7B): zero-shot instruction prompting for misinformation detection
-Qwen 2.5 + RAG: Qwen 2.5 model augmented with domain-specific knowledge retrieval
+
+  BERT Baseline: Pre-trained BERT-base model fine-tuned on our dataset
+  
+  RoBERTa: Optimized BERT architecture with improved training methodology
+  
+  RoBERTa + RAG: RoBERTa model enhanced with Retrieval Augmented Generation 
+  
+  Qwen 2.5 (7B): zero-shot instruction prompting for misinformation detection
+  
+  Qwen 2.5 + RAG: Qwen 2.5 model augmented with domain-specific knowledge retrieval
 
 In addition to the modelling, we have implemented Network Analysis, which includes the following:
 1. Community Detection via Content Similarity
