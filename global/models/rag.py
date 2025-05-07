@@ -85,7 +85,7 @@ class Retriever:
         
         return list(zip(items, scores, keys))
     
-    def batch_retrieve(self, queries: List[str], top_k: int = 2, batch_size: int = 64) -> List[List[Tuple[str, float, str]]]:
+    def batch_retrieve(self, queries: List[str], top_k: int = 2, batch_size: int = 128) -> List[List[Tuple[str, float, str]]]:
         """
         Retrieve knowledge for multiple queries in batches
         
@@ -357,7 +357,7 @@ class LLMRAGModel(VLLMModel):
         system_prompt: Optional[str] = None,
         max_model_len: int = 2048, 
         gpu_memory_utilization: float = 0.9,
-        batch_size: int = 64,
+        batch_size: int = 128,
         **kwargs
     ):
         """
@@ -402,77 +402,17 @@ class LLMRAGModel(VLLMModel):
         if knowledge_base:
             self.retriever.index_knowledge_base(knowledge_base)
             logger.info(f"Indexed knowledge base with {len(knowledge_base)} entries")
-    
-    def combine_text_with_knowledge(self, text: str, knowledge_items: List[Tuple[str, float, str]]) -> str:
+            
+    def _format_chat(self, messages):
         """
-        Combine text with retrieved knowledge
+        Format messages into a chat template the model can understand
         
         Args:
-            text: Original text
-            knowledge_items: Retrieved knowledge items (text, score, key)
+            messages: List of message dictionaries with role and content
             
         Returns:
-            Combined text with knowledge context
+            Formatted prompt string
         """
-        if not knowledge_items:
-            return text
-        
-        # Format retrieved knowledge items
-        knowledge_section = "\n\nRelevant Knowledge:\n"
-        for i, (knowledge_text, score, key) in enumerate(knowledge_items):
-            knowledge_section += f"[{i+1}] {knowledge_text} (Source: {key}, Relevance: {score:.2f})\n"
-        
-        return text + knowledge_section
-    
-    def _create_prompt(self, text: str, **kwargs) -> str:
-        """
-        Create prompt for LLM with RAG enhancement
-        
-        Args:
-            text: Input text
-            **kwargs: Additional prompt parameters
-            
-        Returns:
-            Formatted prompt
-        """
-        # Retrieve relevant knowledge
-        knowledge_items = kwargs.get("knowledge_items", None)
-        
-        # If knowledge items not provided, retrieve them
-        if knowledge_items is None and hasattr(self, "retriever") and self.retriever.knowledge_embeddings is not None:
-            knowledge_items = self.retriever.retrieve(text, self.top_k)
-        
-        # Enhance text with knowledge if available
-        if knowledge_items:
-            enhanced_text = self.combine_text_with_knowledge(text, knowledge_items)
-        else:
-            enhanced_text = text
-        
-        # Create base prompt using enhanced text
-        base_prompt = f"""Classify the following information as either containing Health misinformation (1) or reliable health information (0):
-
-Example 1: "Masks don't work and actually make you sicker by reducing oxygen levels."
-Classification: 1 (This is misinformation)
-
-Example 2: "The CDC recommends wearing masks in crowded indoor settings to reduce disease transmission."
-Classification: 0 (This is factual information)
-
-Text to classify: "{enhanced_text}"
-
-Based on the text and any relevant knowledge provided, classify if this contains health misinformation.
-Classification (0 or 1):"""
-
-        # Use custom prompt if provided
-        custom_prompt = kwargs.get("prompt", None)
-        if custom_prompt:
-            base_prompt = custom_prompt.format(text=enhanced_text)
-        
-        # Format as chat/instruct prompt
-        messages = [
-            {"role": "system", "content": self.system_prompt},
-            {"role": "user", "content": base_prompt}
-        ]
-        
         # Check if model uses specific chat template
         if hasattr(self.tokenizer, "apply_chat_template"):
             formatted_prompt = self.tokenizer.apply_chat_template(
@@ -482,9 +422,378 @@ Classification (0 or 1):"""
             )
         else:
             # Basic chat format fallback
-            formatted_prompt = f"<|system|>\n{self.system_prompt}\n<|user|>\n{base_prompt}\n<|assistant|>\n"
+            formatted_prompt = ""
+            for message in messages:
+                role = message["role"]
+                content = message["content"]
+                
+                if role == "system":
+                    formatted_prompt += f"<|system|>\n{content}\n"
+                elif role == "user":
+                    formatted_prompt += f"<|user|>\n{content}\n"
+                elif role == "assistant":
+                    formatted_prompt += f"<|assistant|>\n{content}\n"
+            
+            # Add generation prompt
+            formatted_prompt += "<|assistant|>\n"
         
         return formatted_prompt
+    def combine_text_with_knowledge(self, text: str, knowledge_items: List[Tuple[str, float, str]]) -> str:
+        if not knowledge_items:
+            return text
+        
+        # Group knowledge by categories
+        categories = {}
+        for knowledge_text, score, key in knowledge_items:
+            # Identify category from key
+            category = self._identify_category(key)
+            if category not in categories:
+                categories[category] = []
+            categories[category].append((knowledge_text, score, key))
+        
+        # Format with categories
+        knowledge_section = "\n\nRelevant Health Knowledge:\n"
+        for category, items in categories.items():
+            knowledge_section += f"\n## {category.replace('_', ' ').title()}\n"
+            for knowledge_text, score, key in items:
+                knowledge_section += f" {knowledge_text} (Key: {key}, Relevance: {score:.2f})\n"
+        
+        return text + knowledge_section
+        
+    def _identify_category(self, key: str) -> str:
+        # Map knowledge base keys to categories
+        categories = {
+            # General Health Facts
+            "immune_boosting": "general_health",
+            "detox_products": "general_health",
+            "health_conspiracies": "general_health",
+            "natural_always_safe": "general_health",
+            "medical_consensus": "general_health",
+            "health_screening": "general_health",
+            "radiation_fears": "general_health",
+            "chemical_fears": "general_health",
+            "correlation_causation": "general_health",
+            "medical_research": "general_health",
+            
+            # Vaccine Facts
+            "autism_vaccines": "vaccines",
+            "vaccine_ingredients": "vaccines",
+            "vaccine_schedule": "vaccines",
+            "mercury_vaccines": "vaccines",
+            "natural_immunity": "vaccines",
+            "hpv_vaccine": "vaccines",
+            "flu_vaccine_myths": "vaccines",
+            "infant_immune_system": "vaccines",
+            "vaccine_testing": "vaccines",
+            "herd_immunity": "vaccines",
+            
+            # Nutrition Facts
+            "superfoods": "nutrition",
+            "detox_diets": "nutrition",
+            "organic_nutrition": "nutrition",
+            "gmo_safety": "nutrition",
+            "alkaline_diet": "nutrition",
+            "gluten_sensitivity": "nutrition",
+            "sugar_addiction": "nutrition",
+            "multivitamin_necessity": "nutrition",
+            "weight_loss_methods": "nutrition",
+            "artificial_sweeteners": "nutrition",
+            "clean_eating": "nutrition",
+            "dietary_fat": "nutrition",
+            "carbohydrates": "nutrition",
+            
+            # Medication Facts
+            "antibiotics_viruses": "medications",
+            "medication_natural": "medications",
+            "generic_drugs": "medications",
+            "pain_medication": "medications",
+            "medication_dependency": "medications",
+            "placebo_effect": "medications",
+            "drug_side_effects": "medications",
+            "expired_medications": "medications",
+            "medication_interactions": "medications",
+            "medication_adherence": "medications",
+            
+            # Alternative Medicine Facts
+            "homeopathy": "alternative_medicine",
+            "acupuncture": "alternative_medicine",
+            "chiropractic": "alternative_medicine",
+            "essential_oils": "alternative_medicine",
+            "energy_healing": "alternative_medicine",
+            "naturopathy": "alternative_medicine",
+            "traditional_medicine": "alternative_medicine",
+            "supplement_regulation": "alternative_medicine",
+            "alternative_cancer": "alternative_medicine",
+            "chelation": "alternative_medicine",
+            "colloidal_silver": "alternative_medicine",
+            
+            # Mental Health Facts
+            "mental_illness_real": "mental_health",
+            "depression_treatment": "mental_health",
+            "antidepressants": "mental_health",
+            "adhd_reality": "mental_health",
+            "therapy_effectiveness": "mental_health",
+            "suicide_prevention": "mental_health",
+            "addiction_choice": "mental_health",
+            "anxiety_disorders": "mental_health",
+            "mental_health_violence": "mental_health",
+            "ocd_misconceptions": "mental_health",
+            "bipolar_disorder": "mental_health",
+            
+            # COVID-19 Facts
+            "covid_vaccine_development": "covid",
+            "covid_vaccine_safety": "covid",
+            "mrna_vaccines": "covid",
+            "masks_effectiveness": "covid",
+            "covid_treatments": "covid",
+            "natural_immunity": "covid",
+            "virus_origin": "covid",
+            "pcr_tests": "covid",
+            "comorbidities": "covid",
+            "long_covid": "covid",
+            
+            # Reproductive Health Facts
+            "birth_control": "reproductive_health",
+            "fertility_tracking": "reproductive_health",
+            "sti_protection": "reproductive_health",
+            "sex_education": "reproductive_health",
+            "abortion_safety": "reproductive_health",
+            "pregnancy_myths": "reproductive_health",
+            "infertility_causes": "reproductive_health",
+            "ectopic_pregnancy": "reproductive_health",
+            "emergency_contraception": "reproductive_health",
+            "assisted_reproduction": "reproductive_health",
+            
+            # Cancer Facts
+            "cancer_causes": "cancer",
+            "cancer_prevention": "cancer",
+            "cancer_treatment": "cancer",
+            "alternative_cancer_treatment": "cancer",
+            "cancer_screening": "cancer",
+            "cancer_sugar": "cancer",
+            "cancer_spread": "cancer",
+            "cancer_biopsy": "cancer",
+            "cancer_genetics": "cancer",
+            "cancer_alkaline": "cancer",
+            "cancer_cures": "cancer",
+            "artificial_sweeteners_cancer": "cancer"
+        }
+        
+        return categories.get(key, "general")
+    
+    def _get_domain_specific_prompt(self, domain):
+        prompts = {
+            "general_health": """
+                You're analyzing a general health claim. Watch for:
+                - "Immune boosting" products without scientific backing
+                - "Detoxification" claims that ignore the body's natural processes
+                - Health conspiracies that misrepresent medical research or institutions
+                - Claims that natural products are inherently safe
+                - Statements that contradict medical consensus
+                
+                Classify if the following contains health misinformation:
+                "{text}"
+                
+                Classification (0 for reliable, 1 for misinformation):
+            """,
+            
+            "vaccines": """
+                You're analyzing a claim related to vaccines. Watch for:
+                - False associations between vaccines and conditions like autism
+                - Misrepresentations about vaccine ingredients
+                - Unfounded concerns about vaccine schedules
+                - Myths about mercury or thimerosal
+                - Misrepresentations of natural vs. vaccine-induced immunity
+                - Unfounded claims about HPV or flu vaccines
+                
+                Classify if the following contains vaccine misinformation:
+                "{text}"
+                
+                Classification (0 for reliable, 1 for misinformation):
+            """,
+            
+            "nutrition": """
+                You're analyzing a nutrition/diet claim. Watch for:
+                - Exaggerated "superfood" claims
+                - Unnecessary "detox" or cleanse recommendations
+                - Misrepresentations about organic foods or GMOs
+                - Unsupported claims about alkaline diets
+                - Overgeneralizations about gluten
+                - Simplistic claims about sugar "addiction"
+                - Myths about supplements, weight loss, sweeteners, or macronutrients
+                
+                Classify if the following contains nutrition misinformation:
+                "{text}"
+                
+                Classification (0 for reliable, 1 for misinformation):
+            """,
+            
+            "medications": """
+                You're analyzing a claim about medications. Watch for:
+                - Suggestions that antibiotics work against viruses
+                - False dichotomies between "natural" and pharmaceutical treatments
+                - Misconceptions about generic medications
+                - Exaggerated fears about pain medications
+                - Confusion between dependency and addiction
+                - Misunderstandings about the placebo effect
+                - Unfounded concerns about side effects or expired medications
+                
+                Classify if the following contains medication misinformation:
+                "{text}"
+                
+                Classification (0 for reliable, 1 for misinformation):
+            """,
+            
+            "alternative_medicine": """
+                You're analyzing a claim about alternative medicine. Watch for:
+                - Unproven claims about homeopathy's effectiveness
+                - Exaggerated benefits of acupuncture beyond evidence
+                - Claims that chiropractic adjustments cure diseases
+                - Therapeutic claims about essential oils beyond evidence
+                - Unfounded claims about "energy healing" practices
+                - Misrepresentations about naturopathy or traditional medicine
+                - Minimizing regulatory differences between supplements and pharmaceuticals
+                - Alternative cancer treatments presented as replacements for conventional care
+                
+                Classify if the following contains alternative medicine misinformation:
+                "{text}"
+                
+                Classification (0 for reliable, 1 for misinformation):
+            """,
+            
+            "mental_health": """
+                You're analyzing a claim about mental health. Watch for:
+                - Statements suggesting mental illnesses aren't real medical conditions
+                - Claims that depression can be overcome through willpower alone
+                - Misconceptions about antidepressants creating artificial happiness
+                - Suggestions that ADHD is just bad behavior
+                - Undermining the effectiveness of therapy
+                - Myths about asking about suicide increasing risk
+                - Framing addiction as purely a choice
+                - Trivializing anxiety disorders
+                - Associating mental illness with violence
+                - Superficial characterizations of OCD or bipolar disorder
+                
+                Classify if the following contains mental health misinformation:
+                "{text}"
+                
+                Classification (0 for reliable, 1 for misinformation):
+            """,
+            
+            "covid": """
+                You're analyzing a claim about COVID-19. Watch for:
+                - Misrepresentations of vaccine development or safety
+                - Myths about mRNA vaccines altering DNA
+                - Claims undermining mask effectiveness
+                - Promotion of unproven treatments
+                - Misleading comparisons between natural immunity and vaccination
+                - Conspiracy theories about virus origins
+                - Misinformation about PCR tests
+                - Downplaying COVID-19 as cause of death
+                - Denying the existence of long COVID
+                
+                Classify if the following contains COVID-19 misinformation:
+                "{text}"
+                
+                Classification (0 for reliable, 1 for misinformation):
+            """,
+            
+            "reproductive_health": """
+                You're analyzing a claim about reproductive health. Watch for:
+                - Mischaracterizations of how birth control works
+                - Overstatements about fertility tracking reliability
+                - Minimizing STI risks or protection methods
+                - Myths about comprehensive sex education
+                - Exaggerating risks of safe, legal abortion
+                - Pregnancy myths about inducing labor
+                - Misconceptions about infertility causes
+                - Misinformation about ectopic pregnancies
+                - Misrepresentations of emergency contraception
+                - Unfounded concerns about assisted reproduction
+                
+                Classify if the following contains reproductive health misinformation:
+                "{text}"
+                
+                Classification (0 for reliable, 1 for misinformation):
+            """,
+            
+            "cancer": """
+                You're analyzing a claim about cancer. Watch for:
+                - Oversimplified statements about cancer causes
+                - Guarantees about cancer prevention
+                - Undermining evidence-based cancer treatments
+                - Promotion of alternative treatments as replacements
+                - Misrepresentations about cancer screening
+                - Claims that eliminating sugar "starves" cancer
+                - Myths about cancer spreading through air exposure or biopsies
+                - Overgeneralizations about cancer genetics
+                - Claims about alkaline diets curing cancer
+                - Conspiracy theories about "hidden cures"
+                
+                Classify if the following contains cancer misinformation:
+                "{text}"
+                
+                Classification (0 for reliable, 1 for misinformation):
+            """,
+            
+            "general": """
+                You're analyzing a health claim that may contain misinformation. Watch for:
+                - Claims that contradict scientific consensus
+                - Statements based on anecdotes rather than research
+                - Exaggerated benefits or minimized risks
+                - Conspiracy theories about medical institutions
+                - Oversimplification of complex health topics
+                - Appeals to nature or tradition over evidence
+                - Misrepresentation of research findings
+                - Claims of miracle cures or treatments
+                
+                Analyze the following text, considering any relevant knowledge provided:
+                "{text}"
+                
+                Classification (0 for reliable, 1 for misinformation):
+            """
+        }
+        
+        return prompts.get(domain, prompts["general"])
+
+    def _create_prompt(self, text: str, **kwargs) -> str:
+        # Retrieve knowledge
+        knowledge_items = kwargs.get("knowledge_items", None)
+        if knowledge_items is None and hasattr(self, "retriever"):
+            knowledge_items = self.retriever.retrieve(text, self.top_k)
+        
+        # Identify primary knowledge domain
+        domain = self._identify_primary_domain(knowledge_items)
+        
+        # Get domain-specific prompt
+        domain_prompt = self._get_domain_specific_prompt(domain)
+        
+        # Enhance text with knowledge
+        enhanced_text = self.combine_text_with_knowledge(text, knowledge_items)
+        
+        # Combine domain-specific prompt with enhanced text
+        final_prompt = domain_prompt.format(text=enhanced_text)
+        
+        # Format as chat/instruct prompt
+        messages = [
+            {"role": "system", "content": self.system_prompt},
+            {"role": "user", "content": final_prompt}
+        ]
+        
+        # Apply chat template
+        return self._format_chat(messages)
+
+    def _identify_primary_domain(self, knowledge_items):
+        if not knowledge_items:
+            return "general"
+        
+        # Count occurrences of categories
+        domains = [self._identify_category(key) for _, _, key in knowledge_items]
+        
+        # Find most common domain
+        from collections import Counter
+        counter = Counter(domains)
+        return counter.most_common(1)[0][0]
     
     def predict(
         self, 

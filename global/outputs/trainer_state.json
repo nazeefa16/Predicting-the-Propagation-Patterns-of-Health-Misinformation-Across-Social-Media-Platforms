@@ -118,9 +118,9 @@
       "step": 426,
       "total_flos": 3588144427395072.0,
       "train_loss": 0.0,
-      "train_runtime": 0.0594,
-      "train_samples_per_second": 456009.474,
-      "train_steps_per_second": 7171.707
+      "train_runtime": 0.0542,
+      "train_samples_per_second": 499956.489,
+      "train_steps_per_second": 7862.866
     }
   ],
   "logging_steps": 50,

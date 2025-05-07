@@ -1,0 +1,8 @@
+{
+  "model_name": "Qwen/Qwen2.5-7B-Instruct-1M",
+  "num_labels": 2,
+  "tensor_parallel_size": 1,
+  "max_new_tokens": 50,
+  "system_prompt": "You are an expert in Health information fact-checking.",
+  "batch_size": 64
+}

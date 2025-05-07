@@ -174,34 +174,43 @@ Classification (0 or 1):"""
         
         return formatted_prompt
     
-    def _extract_label(self, response: str) -> int:
+    def _extract_label(self, text: str) -> int:
         """
-        Extract label from model response
+        Extract label from generated text with improved parsing
         
         Args:
-            response: Model generated response
+            text: Generated text from LLM
             
         Returns:
-            Extracted label (0 or 1)
+            Extracted label (0 or 1, or -1 if unable to extract)
         """
+        # Look for classification at the end of analysis
+        if "classification: 0" in text.lower() or "classification (0)" in text.lower():
+            return 0
+        elif "classification: 1" in text.lower() or "classification (1)" in text.lower():
+            return 1
+        
+        # Also look for clear statements about misinformation
+        if "this is factual" in text.lower() or "not misinformation" in text.lower():
+            return 0
+        elif "this is misinformation" in text.lower() or "contains misinformation" in text.lower():
+            return 1
+        
+        # Default fallback extraction
         try:
-            # Try to find 0 or 1 in the response
-            match = re.search(r'[01]', response)
-            if match:
-                return int(match.group(0))
+            # Try to find just "0" or "1" at the end
+            lines = text.strip().split('\n')
+            for line in reversed(lines):  # Check from end
+                line = line.strip()
+                if line == "0" or line == "1":
+                    return int(line)
+                # Check for 0 or 1 in parentheses at end
+                if line.endswith("(0)") or line.endswith("(1)"):
+                    return int(line[-2])
+        except:
+            logger.warning("Error extracting label")
+        return 0
             
-            # If no direct number found, check for words
-            response_lower = response.lower()
-            if "misinformation" in response_lower or "false" in response_lower:
-                return 1
-            elif "reliable" in response_lower or "factual" in response_lower or "true" in response_lower:
-                return 0
-            
-            # Default if nothing found
-            return 0
-        except Exception as e:
-            logger.error(f"Error extracting label: {e}")
-            return 0
     
     def prepare_data(
         self, 
